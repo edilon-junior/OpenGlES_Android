@@ -23,7 +23,7 @@ public class MainActivity extends Activity
         // Check if the system supports OpenGL ES 3.0.
         final ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         final ConfigurationInfo configurationInfo = activityManager.getDeviceConfigurationInfo();
-        final boolean supportsEs2 = configurationInfo.reqGlEsVersion >= 0x30002;
+        final boolean supportsEs2 = configurationInfo.reqGlEsVersion >= 0x30000;
 
         if (supportsEs2)
         {
