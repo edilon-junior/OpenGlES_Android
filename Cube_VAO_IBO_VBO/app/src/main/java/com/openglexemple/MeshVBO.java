@@ -1,3 +1,29 @@
+package com.example.openglexemple;
+
+import static android.opengl.GLES32.GL_ARRAY_BUFFER;
+import static android.opengl.GLES32.GL_ELEMENT_ARRAY_BUFFER;
+import static android.opengl.GLES32.GL_STATIC_DRAW;
+import static android.opengl.GLES32.glBindBuffer;
+import static android.opengl.GLES32.glBindVertexArray;
+import static android.opengl.GLES32.glBufferData;
+import static com.example.openglexemple.MyRenderer.ATTRIBUTE_NORMAL;
+import static com.example.openglexemple.MyRenderer.ATTRIBUTE_POSITION;
+import static com.example.openglexemple.MyRenderer.ATTRIBUTE_TEXTURE_COORDINATE;
+import static com.example.openglexemple.MyRenderer.BYTES_PER_FLOAT;
+import static com.example.openglexemple.MyRenderer.BYTES_PER_INT;
+import static com.example.openglexemple.MyRenderer.NORMAL_SIZE;
+import static com.example.openglexemple.MyRenderer.POSITION_SIZE;
+import static com.example.openglexemple.MyRenderer.STRIDE_T;
+import static com.example.openglexemple.MyRenderer.TEXTURE_COORDINATE_SIZE;
+
+import android.opengl.GLES32;
+import android.util.Log;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+
 public class MeshVBO {
 
     private static final String TAG = "MESH_VBO";
