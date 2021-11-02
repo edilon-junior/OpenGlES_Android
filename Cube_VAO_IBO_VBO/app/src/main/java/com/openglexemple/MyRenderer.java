@@ -33,22 +33,21 @@ public class MyRenderer implements GLSurfaceView.Renderer
     public static final String UNIFORM_SHININESS = "u_Shininess";
     public static final String UNIFORM_MV_MATRIX = "u_MVMatrix";
     public static final String UNIFORM_MVP_MATRIX = "u_MVPMatrix";
+    public static final String UNIFORM_TEXTURE = "u_Texture";
 
     private final String[] sceneFloatUniforms = new String[]{
-            "u_LightPos", "u_LightColor", "u_ViewPos",
-            "u_Ambient", "u_Diffuse", "u_Specular", "u_Shininess",
-            "u_MVMatrix","u_MVPMatrix"
+            UNIFORM_LIGHT_POS, UNIFORM_LIGHT_COLOR, UNIFORM_VIEW_POS,
+            UNIFORM_AMBIENT, UNIFORM_DIFFUSE, UNIFORM_SPECULAR, UNIFORM_SHININESS,
+            UNIFORM_MV_MATRIX, UNIFORM_MVP_MATRIX
     };
+    
     private final String[] sceneIntUniforms = new String[]{
-            "u_Texture"
+            UNIFORM_TEXTURE
     };
 
     private final String[] sceneAttributes = new String[]{
-            "a_Position", "a_Normal", "a_TexCoordinate","a_Color"
+            ATTRIBUTE_POSITION, ATTRIBUTE_NORMAL, ATTRIBUTE_TEXTURE_COORDINATE, ATTRIBUTE_COLOR
     };
-
-    private final String[] pointAttributes = new String[] {"a_Position"};
-    private final String[] pointFloatUniforms = new String[]{"u_MVPMatrix", "u_Color", "u_PointSize"};
 
     public static final int POSITION_SIZE = 3;
     public static final int NORMAL_SIZE = 3;
@@ -64,14 +63,11 @@ public class MyRenderer implements GLSurfaceView.Renderer
     private float[] mLightPosInEyeSpace = new float[4];
 
     private ShaderProgram sceneProgram;
-    private ShaderProgram pointProgram;
     private Transformation transformation;
     private Loader loader;
 
     GameObject cube1;
     GameObject cube2;
-    PointObject point;
-    PointObject point2;
 
     public MyRenderer(final Context activityContext)
     {
@@ -88,16 +84,12 @@ public class MyRenderer implements GLSurfaceView.Renderer
         sceneProgram.setFloatUniformHandles(sceneFloatUniforms);
         sceneProgram.setIntUniformHandles(sceneIntUniforms);
 
-        pointProgram = loader.loadShaderProgram("point_vertex_shader.vert", "point_fragment_shader.frag", pointAttributes);
-
         cube1 = new GameObject("cube_dice.obj", loader, sceneProgram);
         cube1.translate(0,0,-7);
 
         cube2 = new GameObject("cube_dice.obj", loader, sceneProgram);
         cube2.translate(0, 6, -10);
 
-        point = new PointObject(new Vector3f(2,5,-7), new float[]{1f, 1f, 1f, 1.0f}, new float[]{10.0f});
-        point2 = new PointObject(new Vector3f(0,0,-2), new float[]{1f, 0, 0, 1.0f}, new float[]{10.0f});
         // Set the background clear color to black.
         GLES20.glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
 
@@ -135,20 +127,9 @@ public class MyRenderer implements GLSurfaceView.Renderer
         long time = SystemClock.uptimeMillis() % 10000L;
         float angleInDegrees = (360.0f / 10000.0f) * ((int) time);
 
-        //Draw a point to indicate the light.
-        pointProgram.useProgram();
-        pointProgram.setAttributeHandles(pointAttributes);
-        pointProgram.setFloatUniformHandles(pointFloatUniforms);
-        point.setPosition(2,5,-7);
-        point.setRotation(angleInDegrees,1,0,0);
-        point.update();
-        //point2.setPosition(2,5,-7);
-        //point2.setRotation(angleInDegrees,1,0,0);
-        point2.update();
-        drawLight(point);
-        drawLight(point2);
+        float[] lightModelMatrix = Matrix.setIdentityM(new float[16], 0);
 
-        mLightPosInEyeSpace = transformation.convertIntoEyeSpace(point.getModelPosition(), point.getModelMatrix());
+        mLightPosInEyeSpace = transformation.convertIntoEyeSpace(mLightPosInEyeSpace, point.getModelMatrix());
 
         sceneProgram.useProgram();
         //sceneProgram.setAttributeHandles(sceneAttributes);
@@ -170,8 +151,6 @@ public class MyRenderer implements GLSurfaceView.Renderer
 
         cube1.cleanUp();
         cube2.cleanUp();
-        point.cleanUp();
-        point2.cleanUp();
 
         deltaX = 0.0f;
         deltaY = 0.0f;
@@ -194,20 +173,6 @@ public class MyRenderer implements GLSurfaceView.Renderer
                 transformation.getViewMatrix(), mMVPMatrix);
 
         cube.getMesh().render();
-    }
-
-    /**
-     * Draws a point representing the position of the light.
-     */
-    private void drawLight(PointObject pointObject)
-    {
-
-        float[] mMVPMatrix = transformation.getMVPMatrix(pointObject.getModelMatrix());
-
-        pointProgram.passAttributesBuffers(pointAttributes, new int[]{4}, new FloatBuffer[]{pointObject.getBufferPosition()});
-        pointProgram.passFloatUniforms(pointFloatUniforms, mMVPMatrix, pointObject.getColor(), pointObject.getSize());
-
-        GLES20.glDrawArrays(GLES20.GL_POINTS, 0, 1);
     }
 
     public void setupTexture(final int texture){
