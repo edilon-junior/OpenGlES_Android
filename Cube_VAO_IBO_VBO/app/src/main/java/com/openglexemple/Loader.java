@@ -89,6 +89,7 @@ public class Loader {
         processIndices(positions, textures, normals, vertices, indices,
                 positionArray, textureArray, normalArray, faceArray);
 
+        /* Just to test
         System.out.println("positions length: " + positions.length);
         Log.wtf(TAG, "textures length: "+textures.length);
         System.out.println("indices length: "+indices.length);
@@ -97,7 +98,8 @@ public class Loader {
         System.out.println("normals: "+ Arrays.toString(normals));
         Log.wtf(TAG,"vertices: "+Arrays.toString(vertices));
         System.out.println("indices"+ Arrays.toString(indices));
-
+        */
+        
         MeshVBO mesh = new MeshVBO(positions, textures, normals, vertices, indices);
 
         if(materialName.isEmpty()){
@@ -180,10 +182,6 @@ public class Loader {
         float shininess = 0;
         String textureName = null;
 
-        //String extension = materialPath.substring(materialPath.length() - 3);
-
-        Log.i(TAG, "material name: " + materialPath);
-
         BufferedReader bufferedReader = null;
         try {
             bufferedReader = new BufferedReader(
@@ -235,13 +233,6 @@ public class Loader {
         final BitmapFactory.Options options = new BitmapFactory.Options();
         options.inScaled = false;
 
-        //final int textureId = context.getResources().getIdentifier(textureName, "drawable",
-        //     context.getPackageName());
-
-        //Log.i(TAG, "texture name: " + textureId);
-
-        //final Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), textureId, options);
-
         AssetManager assetManager =  context.getAssets();
         InputStream inputStream = null;
 
@@ -273,13 +264,7 @@ public class Loader {
         {
             throw new RuntimeException("Error generating texture name.");
         }
-/*
-        final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inScaled = false;	// No pre-scaling
-
-        // Read in the resource
-        final Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), resourceId, options);
-*/
+        
         final Bitmap bitmap = loadAsset(textureName, context);
 
         // Bind to the texture in OpenGL
@@ -291,8 +276,7 @@ public class Loader {
 
         // Load the bitmap into the bound texture.
         GLUtils.texImage2D(GL_TEXTURE_2D, 0, bitmap, 0);
-        //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bitmap.getWidth(), bitmap.getHeight(), 0, GL_RGBA,GL_UNSIGNED_BYTE,bitmap.getB);
-        // Recycle the bitmap, since its data has been loaded into OpenGL.
+
         bitmap.recycle();
 
         return textureHandle[0];
@@ -301,13 +285,6 @@ public class Loader {
     public static Bitmap loadAsset(String textureName, Context context) {
         final BitmapFactory.Options options = new BitmapFactory.Options();
         options.inScaled = false;
-
-        //final int textureId = context.getResources().getIdentifier(textureName, "drawable",
-        //     context.getPackageName());
-
-        //Log.i(TAG, "texture name: " + textureId);
-
-        //final Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), textureId, options);
 
         AssetManager assetManager =  context.getAssets();
         InputStream inputStream = null;
@@ -350,7 +327,6 @@ public class Loader {
         }
         String line;
         StringBuilder stringBuilder = new StringBuilder();
-        //bufferedReader.toString();
 
         try {
             while ((line = bufferedReader.readLine()) != null) {
