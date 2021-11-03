@@ -1,11 +1,16 @@
 package com.example.openglexemple;
 
-import static android.opengl.GLES32.GL_ARRAY_BUFFER;
-import static android.opengl.GLES32.GL_ELEMENT_ARRAY_BUFFER;
-import static android.opengl.GLES32.GL_STATIC_DRAW;
-import static android.opengl.GLES32.glBindBuffer;
-import static android.opengl.GLES32.glBindVertexArray;
-import static android.opengl.GLES32.glBufferData;
+import static android.opengl.GLES30.GL_TRIANGLE_STRIP;
+import static android.opengl.GLES30.GL_UNSIGNED_INT;
+import static android.opengl.GLES30.glGenBuffers;
+import static android.opengl.GLES30.glDrawElements;
+import static android.opengl.GLES30.GL_ARRAY_BUFFER;
+import static android.opengl.GLES30.GL_ELEMENT_ARRAY_BUFFER;
+import static android.opengl.GLES30.GL_STATIC_DRAW;
+import static android.opengl.GLES30.glBindBuffer;
+import static android.opengl.GLES30.glBindVertexArray;
+import static android.opengl.GLES30.glBufferData;
+import static android.opengl.GLES30.glGenVertexArrays;
 import static com.example.openglexemple.MyRenderer.ATTRIBUTE_NORMAL;
 import static com.example.openglexemple.MyRenderer.ATTRIBUTE_POSITION;
 import static com.example.openglexemple.MyRenderer.ATTRIBUTE_TEXTURE_COORDINATE;
@@ -16,13 +21,13 @@ import static com.example.openglexemple.MyRenderer.POSITION_SIZE;
 import static com.example.openglexemple.MyRenderer.STRIDE_T;
 import static com.example.openglexemple.MyRenderer.TEXTURE_COORDINATE_SIZE;
 
-import android.opengl.GLES32;
 import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
 
 public class MeshVBO {
 
@@ -74,15 +79,39 @@ public class MeshVBO {
         initializeBuffers();
         createVBO();
         createIBO();
-        bindBufferDataVBO();
-        bindBufferDataIBO();
+        bindBufferData();
         createVAO();
-        bind();
+        bindVAO();
         setAttributes(shaderProgram);
-        unbind();
+        unbindVAO();
     }
 
     public void initializeBuffers() {
+        /*
+        // Initialize the buffers.
+        positionBuffer = ByteBuffer.allocateDirect(vertices.length * BYTES_PER_FLOAT)
+                .order(ByteOrder.nativeOrder()).asFloatBuffer();
+        positionBuffer.put(vertices).position(0);
+
+        //for PLY file format
+        if (colors.length > 0) {
+            colorBuffer = ByteBuffer.allocateDirect(colors.length * BYTES_PER_FLOAT)
+                    .order(ByteOrder.nativeOrder()).asFloatBuffer();
+            colorBuffer.put(colors).position(0);
+        }
+
+        if (normals.length > 0) {
+            normalBuffer = ByteBuffer.allocateDirect(normals.length * BYTES_PER_FLOAT)
+                    .order(ByteOrder.nativeOrder()).asFloatBuffer();
+            normalBuffer.put(normals).position(0);
+        }
+
+        if (textures.length > 0) {
+            textureBuffer = ByteBuffer.allocateDirect(textures.length * BYTES_PER_FLOAT)
+                    .order(ByteOrder.nativeOrder()).asFloatBuffer();
+            textureBuffer.put(textures).position(0);
+        }
+        */
         vertexBuffer = ByteBuffer.allocateDirect(vertices.length * BYTES_PER_FLOAT)
                 .order(ByteOrder.nativeOrder()).asFloatBuffer();
         vertexBuffer.put(vertices).position(0);
@@ -92,64 +121,58 @@ public class MeshVBO {
         indexBuffer.put(indices).position(0);
     }
 
+    public void createVAO() {
+        glGenVertexArrays(1, vao, 0);
+    }
+
     public void createVBO() {
-        GLES32.glGenBuffers(1, vbo, 0);
+        glGenBuffers(1, vbo, 0);
     }
 
     public void createIBO(){
-        GLES32.glGenBuffers(1, ibo, 0);
+        glGenBuffers(1, ibo, 0);
     }
 
-    public void bindBufferDataVBO(){
+    public void bindBufferData(){
         if (vbo[0] > 0 && ibo[0] > 0) {
             glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
             glBufferData(GL_ARRAY_BUFFER, vertexBuffer.capacity() * BYTES_PER_FLOAT,
                     vertexBuffer, GL_STATIC_DRAW);
-        } else {
-            Log.e(TAG, "VBO is not generated");
-        }
-    }
 
-    public void bindBufferDataIBO(){
-        if (ibo[0] > 0){
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo[0]);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.capacity() * BYTES_PER_INT,
                     indexBuffer, GL_STATIC_DRAW);
+
+            //glBindBuffer(GL_ARRAY_BUFFER, 0);
+            //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         } else {
-            Log.e(TAG, "IBO is not generated");
+            Log.e(TAG, "VBO and IBO are not generated");
         }
     }
 
-    public void createVAO() {
-        GLES32.glGenVertexArrays(1, vao, 0);
-    }
-
-    public void bind(){
+    public void bindVAO(){
         glBindVertexArray(vao[0]);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo[0]);
     }
 
     public void setAttributes(ShaderProgram shaderProgram){
         glBindBuffer(GL_ARRAY_BUFFER,vbo[0]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo[0]);
         shaderProgram.enableVertexAttribArray(ATTRIBUTE_POSITION, POSITION_SIZE, STRIDE_T, 0);
-        shaderProgram.enableVertexAttribArray(ATTRIBUTE_NORMAL, NORMAL_SIZE, STRIDE_T,POSITION_SIZE*BYTES_PER_FLOAT );
-        shaderProgram.enableVertexAttribArray(ATTRIBUTE_TEXTURE_COORDINATE, TEXTURE_COORDINATE_SIZE, STRIDE_T, (POSITION_SIZE+NORMAL_SIZE)*BYTES_PER_FLOAT);
+        shaderProgram.enableVertexAttribArray(ATTRIBUTE_TEXTURE_COORDINATE, TEXTURE_COORDINATE_SIZE, STRIDE_T, POSITION_SIZE *BYTES_PER_FLOAT);
+        shaderProgram.enableVertexAttribArray(ATTRIBUTE_NORMAL, NORMAL_SIZE, STRIDE_T,(POSITION_SIZE + TEXTURE_COORDINATE_SIZE)*BYTES_PER_FLOAT );
     }
 
-    public void unbind(){
+    public void unbindVAO(){
         glBindVertexArray ( 0 );
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 
     public void render(){
         // Bind the VAO
-        glBindVertexArray ( vao[0]);
+        bindVAO();
 
         // Draw
-        GLES32.glDrawElements(GLES32.GL_TRIANGLE_STRIP, indices.length, GLES32.GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLE_STRIP, indices.length, GL_UNSIGNED_INT, 0);
 
-        glBindVertexArray ( 0 );
+        unbindVAO();
     }
 }
