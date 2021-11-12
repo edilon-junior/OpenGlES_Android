@@ -81,10 +81,6 @@ public class MyRenderer implements GLSurfaceView.Renderer
     private final Loader loader;
     private Scene scene;
 
-    GameObject cube1;
-    GameObject cube2;
-    List<GameObject> gameObjectList = new ArrayList<GameObject>();
-
     float initial_time = 0;
     boolean start = false;
 
@@ -102,17 +98,6 @@ public class MyRenderer implements GLSurfaceView.Renderer
         pointProgram = loader.loadShaderProgram("point_vertex_shader.vert", "point_fragment_shader.frag", pointAttributes);
 
         setupSceneProgram();
-
-        GameObject cube = new GameObject("grassblock.obj", loader, sceneProgram, 0);
-        //cube.setAngularVelocity(360/10);
-        cube.setRotationAxis(0,1,0);
-        cube.translate(0,0,-7);
-        gameObjectList.add(cube);
-
-        GameObject cube2 = new GameObject("grassblock.obj", loader, sceneProgram, 0);
-        cube2.setRotationAxis(1,0,0);
-        cube2.translate(0, 6, -10);
-        gameObjectList.add(cube2);
 
         scene = new Scene(loader, sceneProgram);
         // Set the background clear color.
