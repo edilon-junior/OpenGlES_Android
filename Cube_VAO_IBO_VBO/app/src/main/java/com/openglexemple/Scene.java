@@ -35,18 +35,46 @@ public class Scene {
     public Scene(Loader loader, ShaderProgram sceneProgram){
 
         GameObject cube = new GameObject("grassblock.obj", loader, sceneProgram, 0);
-        cube.setAngularVelocity(360/10);
-        cube.setRotationAxis(0,1,0);
-        cube.translate(0,0,-7);
+        //cube.setAngularVelocity(360/10);
+        //cube.setRotationAxis(0,1,0);
+        cube.setRotation(0,0,1,0);
+        cube.translate(-3,0,-10);
         addGameObject(cube);
 
         GameObject cube2 = new GameObject("grassblock.obj", loader, sceneProgram, 0);
-        cube2.setAngularVelocity(360/10);
-        cube2.setRotationAxis(1,0,0);
-        cube2.translate(0, 6, -10);
+        //cube2.setAngularVelocity(360/10);
+        //cube2.setRotationAxis(1,0,0);
+        cube2.setRotation(90,0,1,0);
+        cube2.translate(-3, 6, -10);
         addGameObject(cube2);
 
-        //cube3 = new GameObject("cube_dice.obj", loader);
+        GameObject cube3 = new GameObject("grassblock.obj", loader, sceneProgram, 0);
+        //cube2.setAngularVelocity(360/10);
+        //cube2.setRotationAxis(1,0,0);
+        cube3.setRotation(180,0,1,0);
+        cube3.translate(-3, -6, -10);
+        addGameObject(cube3);
+
+        GameObject cube4 = new GameObject("grassblock.obj", loader, sceneProgram, 0);
+        //cube2.setAngularVelocity(360/10);
+        //cube2.setRotationAxis(1,0,0);
+        cube4.setRotation(270,0,1,0);
+        cube4.translate(3, 6, -10);
+        addGameObject(cube4);
+
+        GameObject cube5 = new GameObject("grassblock.obj", loader, sceneProgram, 0);
+        //cube2.setAngularVelocity(360/10);
+        //cube2.setRotationAxis(1,0,0);
+        cube5.setRotation(90,1,0,0);
+        cube5.translate(3, 0, -10);
+        addGameObject(cube5);
+
+        GameObject cube6 = new GameObject("grassblock.obj", loader, sceneProgram, 0);
+        //cube2.setAngularVelocity(360/10);
+        //cube2.setRotationAxis(1,0,0);
+        cube6.setRotation(180,1,0,0);
+        cube6.translate(3, -6, -10);
+        addGameObject(cube6);
 
         PointObject point1 = new PointObject(new Vector3f(2,5,-7), new float[]{1f, 1f, 1f, 1.0f}, new float[]{10.0f});
         PointObject point2 = new PointObject(new Vector3f(0,0,-2), new float[]{1f, 0, 0, 1.0f}, new float[]{10.0f});
