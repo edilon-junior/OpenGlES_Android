@@ -324,7 +324,7 @@ public class Loader {
 
         //flip image on y axis
         Matrix flip = new Matrix();
-        flip.postScale(1f, 1f);
+        flip.postScale(1f, -1f);
 
         return Bitmap.createBitmap(bitmap_asset, 0, 0, bitmap_asset.getWidth(), bitmap_asset.getHeight(), flip, true);
     }
