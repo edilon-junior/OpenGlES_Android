@@ -62,6 +62,11 @@ public class GameObject {
         this.angular_displacement = angleInDegrees;
     }
 
+    public void setRotation(float angle, float x, float y, float z){
+        setRotationAxis(x,y,z);
+        setAngularDisplacement(angle);
+    }
+
     public void translate(float x, float y, float z){
         this.position.keepAdd(x,y,z);
     }
@@ -74,7 +79,7 @@ public class GameObject {
 
     public void updateRotation(float time){
         float delta_t = time - initial_rot_time;
-        angular_displacement = angular_velocity * (delta_t);
+        angular_displacement = angular_displacement + angular_velocity * (delta_t);
         //when complete one cycle
         if(delta_t > 360 * (1/angular_velocity) ){
             initial_rot_time = time;
@@ -85,3 +90,4 @@ public class GameObject {
         Matrix.setIdentityM(modelMatrix, 0);
     }
 }
+
