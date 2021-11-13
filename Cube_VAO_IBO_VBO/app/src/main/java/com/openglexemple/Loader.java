@@ -97,17 +97,6 @@ public class Loader {
         processIndices(positions, textures, normals, vertices, indices,
                 textureArray, normalArray, faceArray);
 
-        System.out.println("positions length: " + positions.length);
-        Log.wtf(TAG, "textures length: "+textures.length);
-        System.out.println("normal length: "+ normals.length);
-        System.out.println("vertices length: "+ vertices.length);
-        Log.wtf(TAG,"indices length: "+indices.length);
-        System.out.println("positions: "+ Arrays.toString(positions));
-        Log.wtf(TAG,"texture: "+ Arrays.toString(textures));
-        System.out.println("normals: "+ Arrays.toString(normals));
-        Log.wtf(TAG,"vertices: "+Arrays.toString(vertices));
-        System.out.println("indices"+ Arrays.toString(indices));
-
         MeshVBO mesh = new MeshVBO(positions, textures, normals, null, vertices, indices);
 
         if(materialName.isEmpty()){
