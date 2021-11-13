@@ -1,7 +1,6 @@
 package com.example.openglexemple;
 
 import static android.opengl.GLES30.GL_TRIANGLES;
-import static android.opengl.GLES30.GL_TRIANGLE_STRIP;
 import static android.opengl.GLES30.GL_UNSIGNED_INT;
 import static android.opengl.GLES30.glGenBuffers;
 import static android.opengl.GLES30.glDrawElements;
@@ -243,7 +242,7 @@ public class MeshVBO {
         //GLES30.glEnableVertexAttribArray(0);
 
         // Draw
-        glDrawElements(GL_TRIANGLE_STRIP, indices.length, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, indices.length, GL_UNSIGNED_INT, 0);
 
         unbindVAO();
     }
