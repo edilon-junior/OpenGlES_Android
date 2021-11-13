@@ -47,27 +47,32 @@ public class Loader {
 
             while ((line = bufferedReader.readLine()) != null) {
                 String[] ls = line.split("\\s+");
-                if (ls[0].equals("mtllib")) {
-                    materialName = ls[1];
-                }
-                if (ls[0].equals("v")) {
-                    positionArray.add(new Float[]{
-                            Float.parseFloat(ls[1]),
-                            Float.parseFloat(ls[2]),
-                            Float.parseFloat(ls[3])});
-                } else if (ls[0].equals("vt")) {
-                    textureArray.add(new Float[]{
-                            Float.parseFloat(ls[1]),
-                            Float.parseFloat(ls[2])});
-                } else if (ls[0].equals("vn")) {
-                    normalArray.add(new Float[]{
-                            Float.parseFloat(ls[1]),
-                            Float.parseFloat(ls[2]),
-                            Float.parseFloat(ls[3])});
-                } else if (ls[0].equals("f")) {
-                    faceArray.add(ls[1]);
-                    faceArray.add(ls[2]);
-                    faceArray.add(ls[3]);
+                switch (ls[0]) {
+                    case "mtllib":
+                        materialName = ls[1];
+                        break;
+                    case "v":
+                        positionArray.add(new Float[]{
+                                Float.parseFloat(ls[1]),
+                                Float.parseFloat(ls[2]),
+                                Float.parseFloat(ls[3])});
+                        break;
+                    case "vt":
+                        textureArray.add(new Float[]{
+                                Float.parseFloat(ls[1]),
+                                Float.parseFloat(ls[2])});
+                        break;
+                    case "vn":
+                        normalArray.add(new Float[]{
+                                Float.parseFloat(ls[1]),
+                                Float.parseFloat(ls[2]),
+                                Float.parseFloat(ls[3])});
+                        break;
+                    case "f":
+                        faceArray.add(ls[1]);
+                        faceArray.add(ls[2]);
+                        faceArray.add(ls[3]);
+                        break;
                 }
             }
         } catch (IOException e) {
@@ -75,7 +80,9 @@ public class Loader {
             e.printStackTrace();
         }
         try {
-            bufferedReader.close();
+            if (bufferedReader != null) {
+                bufferedReader.close();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -195,24 +202,31 @@ public class Loader {
         try {
             while ((line = bufferedReader.readLine()) != null) {
                 String[] ls = line.split("\\s+");
-                if (ls[0].equals("Ka")) {
-                    ambient[0] = Float.parseFloat(ls[1]);
-                    ambient[1] = Float.parseFloat(ls[2]);
-                    ambient[2] = Float.parseFloat(ls[3]);
-                } else if (ls[0].equals("Kd")) {
-                    diffuse[0] = Float.parseFloat(ls[1]);
-                    diffuse[1] = Float.parseFloat(ls[2]);
-                    diffuse[2] = Float.parseFloat(ls[3]);
-                } else if (ls[0].equals("Ks")) {
-                    specular[0] = Float.parseFloat(ls[1]);
-                    specular[1] = Float.parseFloat(ls[2]);
-                    specular[2] = Float.parseFloat(ls[3]);
-                } else if (ls[0].equals("Tr")) {
-                    transparency = Float.parseFloat(ls[1]);
-                } else if (ls[0].equals("Ns")) {
-                    shininess = Float.parseFloat(ls[1]);
-                } else if (ls[0].equals("map_Kd")) {
-                    textureName = ls[1];
+                switch (ls[0]) {
+                    case "Ka":
+                        ambient[0] = Float.parseFloat(ls[1]);
+                        ambient[1] = Float.parseFloat(ls[2]);
+                        ambient[2] = Float.parseFloat(ls[3]);
+                        break;
+                    case "Kd":
+                        diffuse[0] = Float.parseFloat(ls[1]);
+                        diffuse[1] = Float.parseFloat(ls[2]);
+                        diffuse[2] = Float.parseFloat(ls[3]);
+                        break;
+                    case "Ks":
+                        specular[0] = Float.parseFloat(ls[1]);
+                        specular[1] = Float.parseFloat(ls[2]);
+                        specular[2] = Float.parseFloat(ls[3]);
+                        break;
+                    case "Tr":
+                        transparency = Float.parseFloat(ls[1]);
+                        break;
+                    case "Ns":
+                        shininess = Float.parseFloat(ls[1]);
+                        break;
+                    case "map_Kd":
+                        textureName = ls[1];
+                        break;
                 }
             }
 
