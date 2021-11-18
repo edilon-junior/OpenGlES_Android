@@ -1,5 +1,3 @@
-package com.example.openglexemple;
-
 import static android.opengl.GLES20.GL_TEXTURE_2D;
 
 import android.content.Context;
@@ -17,7 +15,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class Loader {
@@ -30,7 +27,7 @@ public class Loader {
 
     private static final String TAG = "LOADER";
 
-    public MeshVBO loadMeshIBO(String modelName) {
+    public Mesh loadMeshIBO(String modelName) {
 
         List<Float[]> positionArray = new ArrayList<>();
         List<Float[]> textureArray = new ArrayList<>();
@@ -41,7 +38,8 @@ public class Loader {
         BufferedReader bufferedReader = null;
         try {
             bufferedReader = new BufferedReader(
-                    new InputStreamReader(context.getAssets().open("models/" + modelName), StandardCharsets.UTF_8));
+                    new InputStreamReader(context.getAssets().open(
+                            "models/"+modelName+"/"+ modelName+".obj"), StandardCharsets.UTF_8));
 
             String line;
 
@@ -93,16 +91,15 @@ public class Loader {
         float[] vertices = new float[positions.length + textures.length + normals.length];
         int[] indices = new int[faceArray.size()];
 
-
         processIndices(positions, textures, normals, vertices, indices,
                 textureArray, normalArray, faceArray);
 
-        MeshVBO mesh = new MeshVBO(positions, textures, normals, null, vertices, indices);
+        Mesh mesh = new Mesh(positions, textures, normals, null, vertices, indices);
 
         if(materialName.isEmpty()){
             mesh.setMaterial(new Material());
         }else{
-            mesh.setMaterial(loadMaterial(materialName));
+            mesh.setMaterial(loadMaterial(modelName, materialName));
         }
 
         return mesh;
@@ -118,7 +115,6 @@ public class Loader {
                                 List<Float[]> normalArray,
                                 List<String> faceArray) {
 
-
         for (int i = 0; i < faceArray.size(); i++) {
             int stride = 3;
             String triplet = faceArray.get(i);
@@ -130,7 +126,7 @@ public class Loader {
             if(triplet_split.length > 1) {
                 int t_index = Integer.parseInt(triplet_split[1]) - 1;
                 Float[] texture = textureArray.get(t_index);
-                textures[v_index * 2 + 0] = texture[0];
+                textures[v_index * 2] = texture[0];
                 textures[v_index * 2 + 1] = texture[1];
 
                 stride += 2;
@@ -139,32 +135,32 @@ public class Loader {
             if(triplet_split.length > 2) {
                 int n_index = Integer.parseInt(triplet_split[2]) - 1;
                 Float[] normal = normalArray.get(n_index);
-                normals[v_index * 3 + 0] = normal[0];
+                normals[v_index * 3] = normal[0];
                 normals[v_index * 3 + 1] = normal[1];
                 normals[v_index * 3 + 2] = normal[2];
 
                 stride += 3;
             }
 
-            vertices[v_index * stride + 0] = pos[v_index * 3 + 0];
+            vertices[v_index * stride] = pos[v_index * 3];
             vertices[v_index * stride + 1] = pos[v_index * 3 + 1];
             vertices[v_index * stride + 2] = pos[v_index * 3 + 2];
 
             if(triplet_split.length > 1) {
-                vertices[v_index * stride + 3] = textures[v_index * 2 + 0];
+                vertices[v_index * stride + 3] = textures[v_index * 2];
                 vertices[v_index * stride + 4] = textures[v_index * 2 + 1];
             }
             if(triplet_split.length > 2) {
-                vertices[v_index * stride + 5] = normals[v_index * 3 + 0];
+                vertices[v_index * stride + 5] = normals[v_index * 3];
                 vertices[v_index * stride + 6] = normals[v_index * 3 + 1];
                 vertices[v_index * stride + 7] = normals[v_index * 3 + 2];
             }
         }
     }
 
-    public Material loadMaterial(String materialPath) {
+    public Material loadMaterial(String modelName, String materialName) {
 
-        if (materialPath.isEmpty()) {
+        if (materialName.isEmpty()) {
             return new Material();
         }
 
@@ -175,14 +171,11 @@ public class Loader {
         float shininess = 0;
         String textureName = null;
 
-        //String extension = materialPath.substring(materialPath.length() - 3);
-
-        Log.i(TAG, "material name: " + materialPath);
-
         BufferedReader bufferedReader = null;
         try {
             bufferedReader = new BufferedReader(
-                    new InputStreamReader(context.getAssets().open("models/" + materialPath), StandardCharsets.UTF_8));
+                    new InputStreamReader(context.getAssets().open(
+                            "models/"+modelName+"/" + materialName), StandardCharsets.UTF_8));
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -229,41 +222,13 @@ public class Loader {
             e.printStackTrace();
         }
 
-        int texture = loadTexture(context,textureName);
+        int texture = loadTexture(modelName, textureName);
         return new Material(ambient, diffuse, specular, shininess, transparency, texture);
     }
 
-    public Bitmap loadBitmap(String textureName) {
-        final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inScaled = false;
-
-        //final int textureId = context.getResources().getIdentifier(textureName, "drawable",
-        //     context.getPackageName());
-
-        //Log.i(TAG, "texture name: " + textureId);
-
-        //final Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), textureId, options);
-
-        AssetManager assetManager =  context.getAssets();
-        InputStream inputStream = null;
-
-        try {
-            inputStream = assetManager.open("textures/" + textureName);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        if(inputStream == null){
-            Log.wtf(TAG, "error to load bitmap from "+textureName);
-        }
-
-        Bitmap bitmap_asset = BitmapFactory.decodeStream(inputStream, null, options);
-
-        return bitmap_asset;
-    }
-
-    public static int loadTexture(final Context context, final String textureName)
+    public int loadTexture(final String modelName, final String textureName)
     {
-        if(textureName.isEmpty()){
+        if(textureName.isEmpty() || (textureName == null)){
             return 0;
         }
 
@@ -275,14 +240,8 @@ public class Loader {
         {
             throw new RuntimeException("Error generating texture name.");
         }
-/*
-        final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inScaled = false;	// No pre-scaling
 
-        // Read in the resource
-        final Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), resourceId, options);
-*/
-        final Bitmap bitmap = loadAsset(textureName, context);
+        final Bitmap bitmap = loadAssetBitmap("models/"+ modelName+"/"+textureName);
 
         // Bind to the texture in OpenGL
         GLES20.glBindTexture(GL_TEXTURE_2D, textureHandle[0]);
@@ -300,27 +259,20 @@ public class Loader {
         return textureHandle[0];
     }
 
-    public static Bitmap loadAsset(String textureName, Context context) {
+    public Bitmap loadAssetBitmap(String path) {
         final BitmapFactory.Options options = new BitmapFactory.Options();
         options.inScaled = false;
-
-        //final int textureId = context.getResources().getIdentifier(textureName, "drawable",
-        //     context.getPackageName());
-
-        //Log.i(TAG, "texture name: " + textureId);
-
-        //final Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), textureId, options);
 
         AssetManager assetManager =  context.getAssets();
         InputStream inputStream = null;
 
         try {
-            inputStream = assetManager.open("textures/" + textureName);
+            inputStream = assetManager.open(path);
         } catch (IOException e) {
             e.printStackTrace();
         }
         if(inputStream == null){
-            System.out.println("error to load bitmap from "+textureName);
+            System.out.println("error to load bitmap from "+ path);
         }
 
         Bitmap bitmap_asset = BitmapFactory.decodeStream(inputStream, null, options);
@@ -352,7 +304,6 @@ public class Loader {
         }
         String line;
         StringBuilder stringBuilder = new StringBuilder();
-        //bufferedReader.toString();
 
         try {
             while ((line = bufferedReader.readLine()) != null) {
@@ -498,4 +449,3 @@ public class Loader {
         return list;
     }
 }
-
