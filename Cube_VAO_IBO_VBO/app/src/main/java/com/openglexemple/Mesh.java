@@ -1,6 +1,8 @@
 package com.example.openglexemple;
 
+import static android.opengl.GLES20.GL_POINTS;
 import static android.opengl.GLES30.GL_TRIANGLES;
+import static android.opengl.GLES30.GL_TRIANGLE_STRIP;
 import static android.opengl.GLES30.GL_UNSIGNED_INT;
 import static android.opengl.GLES30.glGenBuffers;
 import static android.opengl.GLES30.glDrawElements;
@@ -30,12 +32,13 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
-public class MeshVBO {
+public class Mesh {
 
     private static final String TAG = "MESH_VBO";
+    private int vboLength = 0;
+    private int iboLength = 0;
     final int[] vao = new int[1];
-    private final int[] vbo = new int[1];
-    private final int[] vboIds = new int[3];
+    private int[] vbo;
     private final int[] ibo = new int[1];
     private final float[] vertices;
     private final float[] positions;
@@ -51,7 +54,7 @@ public class MeshVBO {
     private IntBuffer indexBuffer;
     Material material;
 
-    public MeshVBO(float[] positions, float[] textures, float[] normals, float[] colors, float[] vertices, int[] indices) {
+    public Mesh(float[] positions, float[] textures, float[] normals, float[] colors, float[] vertices, int[] indices) {
         this.positions = positions;
         this.textures = textures;
         this.normals = normals;
@@ -70,8 +73,9 @@ public class MeshVBO {
 
     public void setupMesh(ShaderProgram shaderProgram){
         createBuffers();
+        vbo = new int[vboLength];
         createVBO(1);
-        createIBO();
+        createIBO(iboLength);
         setupBufferData();
         createVAO();
         bindVAO();
@@ -82,11 +86,12 @@ public class MeshVBO {
 
     public void setupNonInterleavedMesh(ShaderProgram shaderProgram){
         createNonInterleavedBuffers();
-        createVBO(3);
-        createIBO();
+        vbo = new int[vboLength];
+        createVBO(vboLength);
+        createIBO(iboLength);
+        setNoInterleavedBufferData();
         createVAO();
         bindVAO();
-        setNoInterleavedBufferData();
         setupNoInterleavedAttributes(shaderProgram);
         //unbindVBO(3);
         unbindVAO();
@@ -98,6 +103,7 @@ public class MeshVBO {
             positionBuffer = ByteBuffer.allocateDirect(positions.length * BYTES_PER_FLOAT)
                     .order(ByteOrder.nativeOrder()).asFloatBuffer();
             positionBuffer.put(positions).position(0);
+            vboLength++;
         }
 
         //for PLY file format
@@ -105,24 +111,28 @@ public class MeshVBO {
             colorBuffer = ByteBuffer.allocateDirect(colors.length * BYTES_PER_FLOAT)
                     .order(ByteOrder.nativeOrder()).asFloatBuffer();
             colorBuffer.put(colors).position(0);
+            vboLength++;
         }
 
         if (normals != null) {
             normalBuffer = ByteBuffer.allocateDirect(normals.length * BYTES_PER_FLOAT)
                     .order(ByteOrder.nativeOrder()).asFloatBuffer();
             normalBuffer.put(normals).position(0);
+            vboLength++;
         }
 
         if (textures != null) {
             textureBuffer = ByteBuffer.allocateDirect(textures.length * BYTES_PER_FLOAT)
                     .order(ByteOrder.nativeOrder()).asFloatBuffer();
             textureBuffer.put(textures).position(0);
+            vboLength++;
         }
 
         if(indices != null){
             indexBuffer = ByteBuffer.allocateDirect(indices.length * BYTES_PER_INT)
                     .order(ByteOrder.nativeOrder()).asIntBuffer();
             indexBuffer.put(indices).position(0);
+            iboLength++;
         }
     }
 
@@ -144,16 +154,15 @@ public class MeshVBO {
         glGenVertexArrays(1, vao, 0);
     }
 
-    public void createVBO(int i) {
-        if(i == 1){
-            glGenBuffers(1, vbo, 0);
-        }else{
-            glGenBuffers(i, vboIds, 0);
-        }
+    public void createVBO(int n) {
+        glGenBuffers(n, vbo, 0);
     }
 
-    public void createIBO(){
-        glGenBuffers(1, ibo, 0);
+    public void createIBO(int n){
+        if(n == 0){
+            return;
+        }
+        glGenBuffers(n, ibo, 0);
     }
 
     public void setupBufferData(){
@@ -179,31 +188,25 @@ public class MeshVBO {
     }
 
     public void setNoInterleavedBufferData(){
-        if (vbo[0] > 0 ) {
+        if (vboLength > 0 ) {
             //position vbo
-            glBindBuffer(GL_ARRAY_BUFFER, vboIds[0]);
+            glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
             glBufferData(GL_ARRAY_BUFFER, positionBuffer.capacity() * BYTES_PER_FLOAT,
                     positionBuffer, GL_STATIC_DRAW);
-        }else {
-            Log.e(TAG, "VBO "+vboIds[0]+" is not generated");
         }
 
-        if (vbo[1] > 0 ) {
+        if (vboLength > 1 ) {
             //texture cordinate vbo
-            glBindBuffer(GL_ARRAY_BUFFER,vboIds[1]);
+            glBindBuffer(GL_ARRAY_BUFFER,vbo[1]);
             glBufferData(GL_ARRAY_BUFFER, textureBuffer.capacity() * BYTES_PER_FLOAT,
                     textureBuffer, GL_STATIC_DRAW);
-        }else {
-            Log.e(TAG, "VBO "+vboIds[0]+" is not generated");
         }
 
-        if (vbo[2] > 0 ) {
+        if (vboLength > 2 ) {
             //normal vbo
-            glBindBuffer(GL_ARRAY_BUFFER, vboIds[2]);
+            glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
             glBufferData(GL_ARRAY_BUFFER, normalBuffer.capacity() * BYTES_PER_FLOAT,
                     normalBuffer, GL_STATIC_DRAW);
-        }else {
-            Log.e(TAG, "VBO "+vboIds[0]+" is not generated");
         }
 
         if(ibo[0] > 0){
@@ -211,18 +214,21 @@ public class MeshVBO {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo[0]);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.capacity() * BYTES_PER_INT,
                     indexBuffer, GL_STATIC_DRAW);
-        }else{
-            Log.e(TAG, "IBO is not generated");
         }
-
     }
     public void setupNoInterleavedAttributes(ShaderProgram shaderProgram){
-        glBindBuffer(GL_ARRAY_BUFFER, vboIds[0]);
-        shaderProgram.enableVertexAttribArray(ATTRIBUTE_POSITION, POSITION_SIZE, 0, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, vboIds[1]);
-        shaderProgram.enableVertexAttribArray(ATTRIBUTE_TEXTURE_COORDINATE, TEXTURE_COORDINATE_SIZE, 0, 0);
-        glBindBuffer(GL_ARRAY_BUFFER, vboIds[2]);
-        shaderProgram.enableVertexAttribArray(ATTRIBUTE_NORMAL, NORMAL_SIZE, 0, 0);
+        if(vboLength > 0) {
+            glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+            shaderProgram.enableVertexAttribArray(ATTRIBUTE_POSITION, POSITION_SIZE, 0, 0);
+        }
+        if(vboLength > 1) {
+            glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+            shaderProgram.enableVertexAttribArray(ATTRIBUTE_TEXTURE_COORDINATE, TEXTURE_COORDINATE_SIZE, 0, 0);
+        }
+        if(vboLength > 2) {
+            glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
+            shaderProgram.enableVertexAttribArray(ATTRIBUTE_NORMAL, NORMAL_SIZE, 0, 0);
+        }
     }
     public void bindVAO(){
         glBindVertexArray(vao[0]);
@@ -236,15 +242,26 @@ public class MeshVBO {
         glBindVertexArray ( 0 );
     }
 
-    public void render(){
+    public void render(int type){
         // Bind the VAO
         bindVAO();
         //GLES30.glEnableVertexAttribArray(0);
 
         // Draw
-        glDrawElements(GL_TRIANGLES, indices.length, GL_UNSIGNED_INT, 0);
+        switch (type){
+            case GL_TRIANGLES:
+                glDrawElements(GL_TRIANGLES, indices.length, GL_UNSIGNED_INT, 0);
+                break;
+            case GL_POINTS:
+                drawPoint();
+                break;
+        }
 
         unbindVAO();
+    }
+
+    public void drawPoint(){
+        GLES30.glDrawArrays(GL_POINTS, 0, 1);
     }
 
     public void draw(){
@@ -254,6 +271,10 @@ public class MeshVBO {
     public void setupTexture(){
         GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, this.getMaterial().getTexture());
+    }
+
+    public float[] getVertices(){
+        return vertices;
     }
 
     public FloatBuffer getBufferPositions() {
@@ -272,3 +293,4 @@ public class MeshVBO {
         return this.colorBuffer;
     }
 }
+
