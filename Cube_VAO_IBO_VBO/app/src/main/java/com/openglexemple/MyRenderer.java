@@ -94,8 +94,8 @@ public class MyRenderer implements GLSurfaceView.Renderer
     @Override
     public void onSurfaceCreated(GL10 glUnused, EGLConfig config)
     {
-        sceneProgram = loader.loadShaderProgram("per_pixel_vertex_shader.vert", "per_pixel_fragment_shader.frag", sceneAttributes);
-        pointProgram = loader.loadShaderProgram("point_vertex_shader.vert", "point_fragment_shader.frag", pointAttributes);
+        sceneProgram = new ShaderProgram("per_pixel_vertex_shader.vert", "per_pixel_fragment_shader.frag", sceneAttributes, loader);
+        pointProgram = new ShaderProgram("point_vertex_shader.vert", "point_fragment_shader.frag", pointAttributes, loader);
 
         setupSceneProgram();
         setupPointProgram()
@@ -139,10 +139,8 @@ public class MyRenderer implements GLSurfaceView.Renderer
             start = true;
         }
         float time = (SystemClock.uptimeMillis() - initial_time) / 1000; //time in seconds
-
-        //Draw a point to indicate the light.
-        setupPointProgram();
-
+       
+        pointProgram.useProgram();
         for(PointObject point : scene.getPointObjectList()){
             point.update(time);
             drawLight(point);
@@ -152,7 +150,6 @@ public class MyRenderer implements GLSurfaceView.Renderer
         }
 
         sceneProgram.useProgram();
-        //setupSceneProgram();
         for(GameObject gameObject: scene.getGameObjectList()){
             gameObject.getMesh().setupTexture();
 
@@ -163,33 +160,6 @@ public class MyRenderer implements GLSurfaceView.Renderer
 
         deltaX = 0.0f;
         deltaY = 0.0f;
-    }
-
-    private void drawCube(GameObject cube)
-    {
-        float[] mMVPMatrix = transformation.getMVPMatrix(cube.getModelMatrix());
-
-        FloatBuffer bPosition = cube.getMesh().getBufferPositions();
-        FloatBuffer bNormal = cube.getMesh().getBufferNormals();
-        FloatBuffer bTexture = cube.getMesh().getBufferTextureCoordinates();
-        FloatBuffer bColor = cube.getMesh().getBufferColors();
-        FloatBuffer[] attribBuffers = new FloatBuffer[]{bPosition, bNormal, bTexture, bColor};
-
-        float[] ambient = cube.getMesh().getMaterial().ambient;
-        float[] diffuse = cube.getMesh().getMaterial().diffuse;
-        float[] specular = cube.getMesh().getMaterial().specular;
-        float[] shininess = cube.getMesh().getMaterial().shininess;
-
-        sceneProgram.passAttributesBuffers(sceneAttributes,
-                sceneAttributesSizes, attribBuffers);
-        sceneProgram.passIntUniforms(sceneIntUniforms, new int[]{0});
-        sceneProgram.passFloatUniforms(sceneFloatUniforms, mLightPosInEyeSpace, lightColor, new float[]{0,0,0},
-                ambient, diffuse, specular, shininess,
-                transformation.getViewMatrix(), mMVPMatrix);
-
-        cube.getMesh().draw();
-
-        sceneProgram.disableAttributes();
     }
 
     private void drawVAOCube(GameObject cube)
@@ -206,22 +176,17 @@ public class MyRenderer implements GLSurfaceView.Renderer
                 ambient, diffuse, specular, shininess,
                 transformation.getViewMatrix(), mMVPMatrix);
 
-        cube.getMesh().render();
+        cube.getMesh().render(GLES30.GL_TRIANGLES);
     }
 
-    /**
-     * Draws a point representing the position of the light.
-     */
-    private void drawLight(PointObject pointObject)
+    private void drawPoint(PointObject pointObject)
     {
 
         float[] mMVPMatrix = transformation.getMVPMatrix(pointObject.getModelMatrix());
 
-        pointProgram.passAttributesBuffers(pointAttributes,
-                new int[]{4}, new FloatBuffer[]{pointObject.getBufferPosition()});
         pointProgram.passFloatUniforms(pointFloatUniforms, mMVPMatrix, pointObject.getColor(), pointObject.getSize());
 
-        GLES30.glDrawArrays(GLES30.GL_POINTS, 0, 1);
+        pointObject.getMesh().render(GLES30.GL_POINTS);
     }
 
     public void setupSceneProgram(){
