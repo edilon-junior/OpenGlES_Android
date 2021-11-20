@@ -98,7 +98,8 @@ public class MyRenderer implements GLSurfaceView.Renderer
         pointProgram = loader.loadShaderProgram("point_vertex_shader.vert", "point_fragment_shader.frag", pointAttributes);
 
         setupSceneProgram();
-
+        setupPointProgram()
+        
         scene = new Scene(loader, sceneProgram);
         // Set the background clear color.
         GLES30.glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
@@ -230,7 +231,6 @@ public class MyRenderer implements GLSurfaceView.Renderer
     }
 
     public void setupPointProgram(){
-        pointProgram.useProgram();
         pointProgram.setAttributeHandles(pointAttributes);
         pointProgram.setFloatUniformHandles(pointFloatUniforms);
     }
