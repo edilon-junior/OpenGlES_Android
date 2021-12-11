@@ -1,154 +1,143 @@
 package com.example.openglexemple;
 
+import static com.example.openglexemple.Colors.GREEN;
+import static com.example.openglexemple.Colors.RED;
+import static com.example.openglexemple.Colors.WHITE;
 import static com.example.openglexemple.Constants.POINT_ATTRIBUTES;
 import static com.example.openglexemple.Constants.POINT_FLOAT_UNIFORMS;
 import static com.example.openglexemple.Constants.SCENE_ATTRIBUTES;
 import static com.example.openglexemple.Constants.SCENE_FLOAT_UNIFORMS;
 import static com.example.openglexemple.Constants.SCENE_INT_UNIFORMS;
 
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL10;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import android.content.Context;
-import android.opengl.GLES30;
-import android.opengl.GLSurfaceView;
-import android.os.SystemClock;
-import android.util.Log;
+public class Scene {
+    private final String TAG = "SCENE";
 
-public class MyRenderer implements GLSurfaceView.Renderer
-{
-    public volatile float deltaX;
-    public volatile float deltaY;
+    private final Map<Integer, ShaderProgram> shaderProgramList = new HashMap<>();
+    private final List<GameObject> solidModelList = new ArrayList<>();
+    private final List<GameObject> pointList = new ArrayList<>();
 
-    private static final String TAG = "RENDERER";
+    public Light getLight() {
+        return light;
+    }
 
-    private final Context mActivityContext;
-    private final Transformation transformation;
-    private final Loader loader;
-    private Scene scene;
-    float initial_time = 0;
-    boolean start = false;
+    public void setLight(Light light) {
+        this.light = light;
+    }
+
+    private Light light;
+    private ShaderProgram sceneProgram;
     private ShaderProgram pointProgram;
-    //private ShaderProgram sceneProgram;
 
-    public MyRenderer(final Context activityContext)
-    {
-        mActivityContext = activityContext;
-        loader = new Loader(mActivityContext);
-        transformation = new Transformation();
-    }
+    /**
+     *
+     * @param loader
+     * @param transformation
+     */
+    public Scene(Loader loader, Transformation transformation){
+        sceneProgram = new ShaderProgram("per_pixel_vertex_shader.vert", "per_pixel_fragment_shader.frag", SCENE_ATTRIBUTES, loader);
+        sceneProgram.setAttributeHandles(SCENE_ATTRIBUTES);
+        sceneProgram.setFloatUniformHandles(SCENE_FLOAT_UNIFORMS);
+        sceneProgram.setIntUniformHandles(SCENE_INT_UNIFORMS);
 
-    @Override
-    public void onSurfaceCreated(GL10 glUnused, EGLConfig config)
-    {
-        //sceneProgram = new ShaderProgram("per_pixel_vertex_shader.vert", "per_pixel_fragment_shader.frag", SCENE_ATTRIBUTES, loader);
-       // sceneProgram.setAttributeHandles(SCENE_ATTRIBUTES);
-        //sceneProgram.setFloatUniformHandles(SCENE_FLOAT_UNIFORMS);
-        //sceneProgram.setIntUniformHandles(SCENE_INT_UNIFORMS);
+        //pointProgram = new ShaderProgram("point_vertex_shader.vert", "point_fragment_shader.frag", POINT_ATTRIBUTES, loader);
+        //pointProgram.setAttributeHandles(POINT_ATTRIBUTES);
+        //pointProgram.setFloatUniformHandles(POINT_FLOAT_UNIFORMS);
 
-        pointProgram = new ShaderProgram("point_vertex_shader.vert", "point_fragment_shader.frag", POINT_ATTRIBUTES, loader);
-        pointProgram.setAttributeHandles(POINT_ATTRIBUTES);
-        pointProgram.setFloatUniformHandles(POINT_FLOAT_UNIFORMS);
-
-        scene = new Scene(loader, transformation);
-        scene.setPointProgram(pointProgram);
-        scene.createGameObjects(loader);
-        // Set the background clear color.
-        GLES30.glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
-
-        GLES30.glLineWidth(4);
-
-        // Use culling to remove back faces.
-        GLES30.glEnable(GLES30.GL_CULL_FACE);
-        GLES30.glCullFace(GLES30.GL_BACK);
-        // Enable depth testing
-        GLES30.glEnable(GLES30.GL_DEPTH_TEST);
-
-        //GLES30.glFrontFace(GLES30.GL_CCW);
-
-        transformation.createViewMatrix();
-    }
-
-    @Override
-    public void onSurfaceChanged(GL10 glUnused, int width, int height)
-    {
-        deltaX = 0.0f;
-        deltaY = 0.0f;
-
-        // Set the OpenGL viewport to the same size as the surface.
-        GLES30.glViewport(0, 0, width, height);
-
-        transformation.createPerspectiveMatrix(width, height);
-    }
-
-    @Override
-    public void onDrawFrame(GL10 glUnused)
-    {
-        transformation.createViewProjectionMatrix();
-
-        GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT | GLES30.GL_DEPTH_BUFFER_BIT);
-
-        if(start == false){
-            initial_time = SystemClock.uptimeMillis();
-            start = true;
+        //index is the program id
+        if(sceneProgram.getProgramHandle() > -1){
+            shaderProgramList.put(sceneProgram.getProgramHandle(),sceneProgram);
         }
-        float time = (SystemClock.uptimeMillis() - initial_time) / 1000; //time in seconds
+        //if(pointProgram.getProgramHandle() > -1){
+           // shaderProgramList.put(pointProgram.getProgramHandle(),pointProgram);
+        //}
 
-        //Draw a point to indicate the light.
-
-        //ShaderProgram pointProgram = scene.getPointProgram();
-        pointProgram.useProgram();
-        pointProgram.setAttributeHandles(POINT_ATTRIBUTES);
-        pointProgram.setFloatUniformHandles(POINT_FLOAT_UNIFORMS);
-        for(Point point : scene.getPointList()){
-            point.update(time);
-            point.render(pointProgram, transformation);
-            point.cleanUp();
-        }
-        for(Polygon polygon : scene.getPolygonList()){
-            polygon.update(time);
-            polygon.render(pointProgram, transformation);
-            polygon.cleanUp();
-        }
-       /*
-        sceneProgram.useProgram();
-        for(GameObject gameObject: scene.getGameObjectList()){
-            gameObject.getMesh().setupTexture();
-            gameObject.update(time);
-            gameObject.render(scene, transformation);
-            gameObject.cleanUp();
-        }
-*/
-        deltaX = 0.0f;
-        deltaY = 0.0f;
+        light = new Light(transformation);
     }
-/*
-    private void drawCube(GameObject cube)
-    {
-        float[] mMVPMatrix = transformation.getMVPMatrix(cube.getModelMatrix());
 
-        FloatBuffer bPosition = cube.getMesh().getBufferPositions();
-        FloatBuffer bNormal = cube.getMesh().getBufferNormals();
-        FloatBuffer bTexture = cube.getMesh().getBufferTextureCoordinates();
-        FloatBuffer bColor = cube.getMesh().getBufferColors();
-        FloatBuffer[] attribBuffers = new FloatBuffer[]{bPosition, bNormal, bTexture, bColor};
+    public void createGameObjects(Loader loader){
+        GameObject cube = new SolidModel("cube_dice", loader, sceneProgram, 0);
+        //cube.setAngularVelocity(360/10);
+        //cube.setRotationAxis(0,1,0);
+        cube.translate(-3,6,-10);
+        cube.setRotation(0,0,1,0);
+        addGameObject(cube);
 
-        float[] ambient = cube.getMesh().getMaterial().ambient;
-        float[] diffuse = cube.getMesh().getMaterial().diffuse;
-        float[] specular = cube.getMesh().getMaterial().specular;
-        float[] shininess = cube.getMesh().getMaterial().shininess;
+        GameObject cube2 = new SolidModel("cube_dice", loader, sceneProgram, 0);
+        //cube2.setAngularVelocity(360/10);
+        //cube2.setRotationAxis(1,0,0);
+        cube2.translate(-3, 0, -10);
+        cube2.setRotation(90,0,1,0);
+        addGameObject(cube2);
 
-        sceneProgram.enableVertexAttribArray(sceneAttributes,
-                sceneAttributesSizes, attribBuffers);
-        sceneProgram.passIntUniforms(sceneIntUniforms, new int[]{0});
-        sceneProgram.passFloatUniforms(sceneFloatUniforms, mLightPosInEyeSpace, lightColor, new float[]{0,0,0},
-                ambient, diffuse, specular, shininess,
-                transformation.getViewMatrix(), mMVPMatrix);
+        GameObject cube3 = new SolidModel("cube_dice", loader, sceneProgram, 0);
+        //cube2.setAngularVelocity(360/10);
+        //cube2.setRotationAxis(1,0,0);
+        cube3.translate(-3, -6, -10);
+        cube3.setRotation(180,0,1,0);
+        addGameObject(cube3);
 
-        cube.getMesh().draw();
+        GameObject cube4 = new SolidModel("cube_dice", loader, sceneProgram, 0);
+        //cube2.setAngularVelocity(360/10);
+        //cube2.setRotationAxis(1,0,0);
+        cube4.translate(3, 6, -10);
+        cube4.setRotation(270,0,1,0);
+        addGameObject(cube4);
 
-        sceneProgram.disableAttributes();
+        GameObject cube5 = new SolidModel("cube_dice", loader, sceneProgram, 0);
+        //cube2.setAngularVelocity(360/10);
+        //cube2.setRotationAxis(1,0,0);
+        cube5.translate(3, 0, -10);
+        cube5.setRotation(90,1,0,0);
+        addGameObject(cube5);
+
+        GameObject cube6 = new SolidModel("cube_dice", loader, sceneProgram, 0);
+        //cube2.setAngularVelocity(360/10);
+        //cube2.setRotationAxis(1,0,0);
+        cube6.translate(3, -6, -10);
+        cube6.setRotation(270,1,0,0);
+        addGameObject(cube6);
+
+        GameObject point1 = new Point(new Vector3f(2,5,-6), WHITE, 10.0f, pointProgram);
+        GameObject point2 = new Point(new Vector3f(0,0,-6), RED, 10.0f, pointProgram);
+
+        GameObject polygon = new Polygon(new Vector3f(0,0,-6), 16, GREEN, 1,0, pointProgram);
+        polygon.setPointSize(10);
+
+        pointList.add(point1);
+        pointList.add(point2);
+        pointList.add(polygon);
+
     }
-*/
 
+    public void addGameObject(GameObject gameObject){
+        solidModelList.add(gameObject);
+    }
+
+    public void addGameObject(GameObject gameObject, int index){
+        solidModelList.add(index, gameObject);
+    }
+
+    public List<GameObject> getGameObjectList(){
+        return this.solidModelList;
+    }
+
+    public List<GameObject> getPointList(){
+        return this.pointList;
+    }
+
+    public ShaderProgram getShaderProgram(int shaderProgramId){
+        return shaderProgramList.get(shaderProgramId);
+    }
+
+    public void setPointProgram(ShaderProgram pointProgram){
+        this.pointProgram = pointProgram;
+    }
+    public ShaderProgram getPointProgram(){
+        return this.pointProgram;
+    }
 }
