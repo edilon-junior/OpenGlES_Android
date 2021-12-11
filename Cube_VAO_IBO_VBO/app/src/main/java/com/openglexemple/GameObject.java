@@ -12,6 +12,8 @@ public abstract class GameObject {
     private float initialRotTime;
     private final float currentRotTime;
     protected final float[]  modelMatrix;
+    private float[] color;
+    private final float[] pointSize = new float[1];
     private final Vector3f scale;
     private final Vector3f initialPosition;
     private final Vector3f position;
@@ -28,6 +30,7 @@ public abstract class GameObject {
         rotationAxis = new Vector3f(1,0,0);
         translationalVelocity = new Vector3f();
         angularDisplacement = 0.0f;
+        color = Colors.GRAY;
         scale= new Vector3f(1.0f, 1.0f, 1.0f);
         modelMatrix = new float[16];
         angularVelocity = 0;
@@ -36,6 +39,19 @@ public abstract class GameObject {
         Matrix.setIdentityM(modelMatrix, 0);
     }
 
+    public void setColor(float[] color){
+        this.color = color;
+    }
+    public float[] getColor() {
+        return color;
+    }
+    public void setPointSize(float size) {
+        this.pointSize[0] = size;
+    }
+
+    public float[] getPointSize(){
+        return this.pointSize;
+    }
     public void setScale(Vector3f scale){
         this.scale.set(scale);
         updateModelMatrix = true;
@@ -153,3 +169,4 @@ public abstract class GameObject {
 
     }
 }
+
