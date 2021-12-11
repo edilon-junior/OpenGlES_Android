@@ -135,8 +135,6 @@ public class Polygon {
     }
 
     public void cleanUp(){
-        //Matrix.setIdentityM(modelMatrix, 0);
-        System.out.println("polygon model matrix");
-        Utils.printMatrix(modelMatrix);
+
     }
 }
