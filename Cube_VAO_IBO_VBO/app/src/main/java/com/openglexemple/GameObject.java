@@ -4,14 +4,14 @@ import android.opengl.Matrix;
 
 public abstract class GameObject {
 
-    protected boolean updateModelMatrix;
+    private boolean updateModelMatrix;
     private int meshIndex;
     private int shaderProgramId;
     private float angularDisplacement;
     private float angularVelocity;
     private float initialRotTime;
     private final float currentRotTime;
-    protected final float[]  modelMatrix;
+    private final float[]  modelMatrix;
     private float[] color;
     private final float[] pointSize = new float[1];
     private final Vector3f scale;
@@ -39,6 +39,12 @@ public abstract class GameObject {
         Matrix.setIdentityM(modelMatrix, 0);
     }
 
+    public void setUpdateModelMatrix(boolean updateModelMatrix){
+        this.updateModelMatrix = updateModelMatrix;
+    }
+    public boolean isUpdateModelMatrix(){
+        return updateModelMatrix;
+    }
     public void setColor(float[] color){
         this.color = color;
     }
@@ -54,7 +60,7 @@ public abstract class GameObject {
     }
     public void setScale(Vector3f scale){
         this.scale.set(scale);
-        updateModelMatrix = true;
+        setUpdateModelMatrix(true);
     }
     public Vector3f getScale(){
         return this.scale.clone();
@@ -116,7 +122,7 @@ public abstract class GameObject {
 
     public void setPosition(Vector3f position){
         this.position.set(position);
-        updateModelMatrix = true;
+        setUpdateModelMatrix(true);
     }
 
     public Vector3f getPosition(){
@@ -126,7 +132,7 @@ public abstract class GameObject {
     public void setRotation(float angle, float x, float y, float z){
         setRotationAxis(x,y,z);
         setAngularDisplacement(angle);
-        updateModelMatrix = true;
+        setUpdateModelMatrix(true);
     }
     public void translate(float x, float y, float z){
         this.position.keepAdd(x,y,z);
@@ -140,26 +146,10 @@ public abstract class GameObject {
     }
 
     public void update(float time){
-        updateModelMatrix();
-        //translate first!
-        updateRotation(time);
-    }
-
-    private void updateModelMatrix(){
-        if(updateModelMatrix == true){
-            Matrix.setIdentityM(modelMatrix, 0);
-            Matrix.scaleM(modelMatrix, 0, scale.x, scale.y, scale.z);
-            Matrix.rotateM(modelMatrix, 0, angularDisplacement, rotationAxis.x, rotationAxis.y, rotationAxis.z);
-            Matrix.translateM(modelMatrix, 0,position.x,position.y,position.z);
-            updateModelMatrix = false;
-        }
-    }
-
-    public void updateRotation(float time){
 
     }
 
-    public void render(Scene scene, ShaderProgram shaderProgram, Transformation transformation){
+    public void render(Scene scene, Transformation transformation){
 
     }
     public void render(ShaderProgram shaderProgram, Transformation transformation){
@@ -169,4 +159,3 @@ public abstract class GameObject {
 
     }
 }
-
