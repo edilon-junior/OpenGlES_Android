@@ -19,12 +19,12 @@ public class Point extends GameObject{
     }
 
     public void updateModelMatrix(){
-        if(updateModelMatrix){
+        if(isUpdateModelMatrix() == true){
             float[] tempMatrix = new float[16];
             Matrix.setIdentityM(tempMatrix, 0);
             Matrix.translateM(tempMatrix, 0,getPosition().x,getPosition().y,getPosition().z);
             setModelMatrix(tempMatrix);
-            updateModelMatrix = false;
+            setUpdateModelMatrix(false);
         }
     }
 
@@ -41,6 +41,8 @@ public class Point extends GameObject{
     }
 
 }
+
+
 
 
 
