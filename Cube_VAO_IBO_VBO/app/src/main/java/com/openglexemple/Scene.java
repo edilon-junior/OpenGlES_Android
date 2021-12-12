@@ -30,7 +30,7 @@ public class Scene {
     }
 
     private Light light;
-    private ShaderProgram sceneProgram;
+    private ShaderProgram solidProgram;
     private ShaderProgram pointProgram;
 
     /**
@@ -39,18 +39,18 @@ public class Scene {
      * @param transformation
      */
     public Scene(Loader loader, Transformation transformation){
-        sceneProgram = new ShaderProgram("per_pixel_vertex_shader.vert", "per_pixel_fragment_shader.frag", SCENE_ATTRIBUTES, loader);
-        sceneProgram.setAttributeHandles(SCENE_ATTRIBUTES);
-        sceneProgram.setFloatUniformHandles(SCENE_FLOAT_UNIFORMS);
-        sceneProgram.setIntUniformHandles(SCENE_INT_UNIFORMS);
+        solidProgram = new ShaderProgram("per_pixel_vertex_shader.vert", "per_pixel_fragment_shader.frag", SCENE_ATTRIBUTES, loader);
+        solidProgram.setAttributeHandles(SCENE_ATTRIBUTES);
+        solidProgram.setFloatUniformHandles(SCENE_FLOAT_UNIFORMS);
+        solidProgram.setIntUniformHandles(SCENE_INT_UNIFORMS);
 
-        //pointProgram = new ShaderProgram("point_vertex_shader.vert", "point_fragment_shader.frag", POINT_ATTRIBUTES, loader);
-        //pointProgram.setAttributeHandles(POINT_ATTRIBUTES);
-        //pointProgram.setFloatUniformHandles(POINT_FLOAT_UNIFORMS);
+        pointProgram = new ShaderProgram("point_vertex_shader.vert", "point_fragment_shader.frag", POINT_ATTRIBUTES, loader);
+        pointProgram.setAttributeHandles(POINT_ATTRIBUTES);
+        pointProgram.setFloatUniformHandles(POINT_FLOAT_UNIFORMS);
 
         //index is the program id
-        if(sceneProgram.getProgramHandle() > -1){
-            shaderProgramList.put(sceneProgram.getProgramHandle(),sceneProgram);
+        if( solidProgram.getProgramHandle() > -1){
+            shaderProgramList.put( solidProgram.getProgramHandle(), solidProgram);
         }
         //if(pointProgram.getProgramHandle() > -1){
            // shaderProgramList.put(pointProgram.getProgramHandle(),pointProgram);
@@ -60,47 +60,48 @@ public class Scene {
     }
 
     public void createGameObjects(Loader loader){
-        GameObject cube = new SolidModel("cube_dice", loader, sceneProgram, 0);
+        GameObject cube = new SolidModel("cube_dice", loader,  solidProgram, 0);
         //cube.setAngularVelocity(360/10);
         //cube.setRotationAxis(0,1,0);
         cube.translate(-3,6,-10);
         cube.setRotation(0,0,1,0);
-        addGameObject(cube);
+        cube.setScale(new Vector3f(2,2,2));
+        addSolidModel(cube);
 
-        GameObject cube2 = new SolidModel("cube_dice", loader, sceneProgram, 0);
+        GameObject cube2 = new SolidModel("cube_dice", loader,  solidProgram, 0);
         //cube2.setAngularVelocity(360/10);
         //cube2.setRotationAxis(1,0,0);
         cube2.translate(-3, 0, -10);
         cube2.setRotation(90,0,1,0);
-        addGameObject(cube2);
+        addSolidModel(cube2);
 
-        GameObject cube3 = new SolidModel("cube_dice", loader, sceneProgram, 0);
+        GameObject cube3 = new SolidModel("cube_dice", loader,  solidProgram, 0);
         //cube2.setAngularVelocity(360/10);
         //cube2.setRotationAxis(1,0,0);
         cube3.translate(-3, -6, -10);
         cube3.setRotation(180,0,1,0);
-        addGameObject(cube3);
+        addSolidModel(cube3);
 
-        GameObject cube4 = new SolidModel("cube_dice", loader, sceneProgram, 0);
+        GameObject cube4 = new SolidModel("cube_dice", loader,  solidProgram, 0);
         //cube2.setAngularVelocity(360/10);
         //cube2.setRotationAxis(1,0,0);
         cube4.translate(3, 6, -10);
         cube4.setRotation(270,0,1,0);
-        addGameObject(cube4);
+        addSolidModel(cube4);
 
-        GameObject cube5 = new SolidModel("cube_dice", loader, sceneProgram, 0);
+        GameObject cube5 = new SolidModel("cube_dice", loader,  solidProgram, 0);
         //cube2.setAngularVelocity(360/10);
         //cube2.setRotationAxis(1,0,0);
         cube5.translate(3, 0, -10);
         cube5.setRotation(90,1,0,0);
-        addGameObject(cube5);
+        addSolidModel(cube5);
 
-        GameObject cube6 = new SolidModel("cube_dice", loader, sceneProgram, 0);
+        GameObject cube6 = new SolidModel("cube_dice", loader,  solidProgram, 0);
         //cube2.setAngularVelocity(360/10);
         //cube2.setRotationAxis(1,0,0);
         cube6.translate(3, -6, -10);
-        cube6.setRotation(270,1,0,0);
-        addGameObject(cube6);
+        cube6.setRotation(0,1,0,0);
+        addSolidModel(cube6);
 
         GameObject point1 = new Point(new Vector3f(2,5,-6), WHITE, 10.0f, pointProgram);
         GameObject point2 = new Point(new Vector3f(0,0,-6), RED, 10.0f, pointProgram);
@@ -112,17 +113,18 @@ public class Scene {
         pointList.add(point2);
         pointList.add(polygon);
 
+        System.out.println("solid model list size: "+solidModelList.size());
     }
 
-    public void addGameObject(GameObject gameObject){
+    public void addSolidModel(GameObject gameObject){
         solidModelList.add(gameObject);
     }
 
-    public void addGameObject(GameObject gameObject, int index){
+    public void addSolidModel(GameObject gameObject, int index){
         solidModelList.add(index, gameObject);
     }
 
-    public List<GameObject> getGameObjectList(){
+    public List<GameObject> getSolidModelList(){
         return this.solidModelList;
     }
 
@@ -132,6 +134,10 @@ public class Scene {
 
     public ShaderProgram getShaderProgram(int shaderProgramId){
         return shaderProgramList.get(shaderProgramId);
+    }
+
+    public ShaderProgram getSolidProgram(){
+        return this.solidProgram;
     }
 
     public void setPointProgram(ShaderProgram pointProgram){
