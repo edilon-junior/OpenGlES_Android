@@ -58,7 +58,7 @@ public class SolidModel extends GameObject {
             setInitialRotTime(time);
         }
         if (angularDisplacement != 0) {
-            rotate(angularDisplacement, getRotationAxis().x, getRotationAxis().y, getRotationAxis().z);
+            setRotation(angularDisplacement, getRotationAxis().x, getRotationAxis().y, getRotationAxis().z);
         }
     }
 
