@@ -1,7 +1,8 @@
 package com.example.openglexemple;
 
-import static android.opengl.GLES20.GL_LINE_LOOP;
-import static android.opengl.GLES20.GL_POINTS;
+import static android.opengl.GLES30.GL_LINE_LOOP;
+import static android.opengl.GLES30.GL_POINTS;
+import static android.opengl.GLES30.GL_UNSIGNED_SHORT;
 import static android.opengl.GLES30.GL_TRIANGLES;
 import static android.opengl.GLES30.GL_TRIANGLE_STRIP;
 import static android.opengl.GLES30.GL_UNSIGNED_INT;
@@ -18,7 +19,7 @@ import static com.example.openglexemple.Constants.ATTRIBUTE_NORMAL;
 import static com.example.openglexemple.Constants.ATTRIBUTE_POSITION;
 import static com.example.openglexemple.Constants.ATTRIBUTE_TEXTURE_COORDINATE;
 import static com.example.openglexemple.Constants.BYTES_PER_FLOAT;
-import static com.example.openglexemple.Constants.BYTES_PER_INT;
+import static com.example.openglexemple.Constants.BYTES_PER_SHORT;
 import static com.example.openglexemple.Constants.NORMAL_SIZE;
 import static com.example.openglexemple.Constants.POSITION_SIZE;
 import static com.example.openglexemple.Constants.STRIDE_T;
@@ -30,7 +31,7 @@ import android.util.Log;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
+import java.nio.ShortBuffer;
 
 public class Mesh {
 
@@ -47,19 +48,19 @@ public class Mesh {
     private float[] textures;
     private float[] normals;
     private final float[] colors;
-    private final int[] indices;
+    private final short[] indices;
     private FloatBuffer vertexBuffer;
     private FloatBuffer positionBuffer;
     private FloatBuffer colorBuffer;
     private FloatBuffer normalBuffer;
     private FloatBuffer textureBuffer;
-    private IntBuffer indexBuffer;
+    private ShortBuffer indexBuffer;
     private String modelName;
     private String meshName;
     private String materialName;
     Material[] materials;
 
-    public Mesh(float[] positions, float[] textures, float[] normals, float[] colors, float[] vertices, int[] indices) {
+    public Mesh(float[] positions, float[] textures, float[] normals, float[] colors, float[] vertices, short[] indices) {
         this.positions = positions;
         this.textures = textures;
         this.normals = normals;
@@ -135,8 +136,8 @@ public class Mesh {
         }
 
         if(indices != null){
-            indexBuffer = ByteBuffer.allocateDirect(indices.length * BYTES_PER_INT)
-                    .order(ByteOrder.nativeOrder()).asIntBuffer();
+            indexBuffer = ByteBuffer.allocateDirect(indices.length * BYTES_PER_SHORT)
+                    .order(ByteOrder.nativeOrder()).asShortBuffer();
             indexBuffer.put(indices).position(0);
             iboLength++;
         }
@@ -151,8 +152,8 @@ public class Mesh {
         }
 
         if(indices != null){
-            indexBuffer = ByteBuffer.allocateDirect(indices.length * BYTES_PER_INT)
-                    .order(ByteOrder.nativeOrder()).asIntBuffer();
+            indexBuffer = ByteBuffer.allocateDirect(indices.length * BYTES_PER_SHORT)
+                    .order(ByteOrder.nativeOrder()).asShortBuffer();
             indexBuffer.put(indices).position(0);
             iboLength++;
         }
@@ -180,7 +181,7 @@ public class Mesh {
                     vertexBuffer, GL_STATIC_DRAW);
 
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo[0]);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.capacity() * BYTES_PER_INT,
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.capacity() * BYTES_PER_SHORT,
                     indexBuffer, GL_STATIC_DRAW);
         } else {
             Log.e(TAG, "VBO and IBO are not generated");
@@ -220,7 +221,7 @@ public class Mesh {
         if(ibo[0] > 0){
             //ibo
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo[0]);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.capacity() * BYTES_PER_INT,
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.capacity() * BYTES_PER_SHORT,
                     indexBuffer, GL_STATIC_DRAW);
         }
     }
@@ -257,7 +258,7 @@ public class Mesh {
         // Draw
         switch (type){
             case GL_TRIANGLES:
-                glDrawElements(GL_TRIANGLES, toIndex, GL_UNSIGNED_INT, fromIndex);
+                glDrawElements(GL_TRIANGLES, toIndex, GL_UNSIGNED_SHORT, fromIndex);
                 break;
             case GL_POINTS:
                 drawPoint();
@@ -335,4 +336,5 @@ public class Mesh {
         return materialName;
     }
 }
+
 
