@@ -52,13 +52,14 @@ public class SolidModel extends GameObject {
 
     private void updateRotation(float time) {
         float delta_t = time - getInitialRotTime();
+
         float angularDisplacement = getAngularVelocity() * (delta_t);
         //when complete one cycle
         if (delta_t > 360 * (1 / getAngularVelocity())) {
             setInitialRotTime(time);
         }
         if (angularDisplacement != 0) {
-            setRotation(angularDisplacement, getRotationAxis().x, getRotationAxis().y, getRotationAxis().z);
+           setRotation(angularDisplacement, getRotationAxis().x, getRotationAxis().y, getRotationAxis().z);
         }
     }
 
@@ -75,8 +76,8 @@ public class SolidModel extends GameObject {
             if(mesh == null) return; //do nothing
 
             int fromIndex = 0;
+            int mIndex = 0;
             for(Material material: mesh.getMaterials()) {
-                material.setupTexture();
 
                 float[] mMVPMatrix = transformation.getMVPMatrix(this.getModelMatrix());
 
@@ -90,7 +91,8 @@ public class SolidModel extends GameObject {
                 Light light = scene.getLight();
                 ShaderProgram shaderProgram = scene.getShaderProgram(getShaderProgramId());
 
-                shaderProgram.passIntUniforms(SCENE_INT_UNIFORMS, new int[]{0});
+                material.setupTexture(mIndex);
+                shaderProgram.passIntUniforms(SCENE_INT_UNIFORMS, material.getSample2Did());
                 shaderProgram.passFloatUniforms(SCENE_FLOAT_UNIFORMS, light.getLightPosInEyeSpace(), light.getLightColor(), new float[]{0, 0, 0},
                         ambient, diffuse, specular, shininess,
                         transformation.getViewMatrix(), mMVPMatrix);
@@ -99,6 +101,8 @@ public class SolidModel extends GameObject {
                 mesh.render(GLES30.GL_TRIANGLES, fromIndex, toIndexInBytes);
 
                 fromIndex = toIndex;
+
+                mIndex++;
             }
         }
     }
@@ -107,7 +111,5 @@ public class SolidModel extends GameObject {
     public void cleanUp(){
     }
 }
-
-
 
 
