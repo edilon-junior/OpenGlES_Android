@@ -6,6 +6,9 @@ import static com.example.openglexemple.Constants.SCENE_INT_UNIFORMS;
 import android.opengl.GLES30;
 import android.opengl.Matrix;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class SolidModel extends GameObject {
     /**
      * @param modelName
@@ -20,14 +23,18 @@ public class SolidModel extends GameObject {
         super(); //call default constructor
         setShaderProgramId(shaderProgram.getProgramHandle());
         Mesh solidMesh = loader.loadMeshIBO(modelName);
-        if (type == 0) {
-            solidMesh.setupMesh(shaderProgram);
-        } else if (type == 1) {
-            solidMesh.setupNonInterleavedMesh(shaderProgram);
-        } else if (type == 2) {
-            solidMesh.createBuffers();
+        List<Mesh> solidMeshes = new ArrayList<>();
+        solidMeshes.add(solidMesh);
+        for(Mesh mesh: solidMeshes) {
+            if (type == 0) {
+                mesh.setupMesh(shaderProgram);
+            } else if (type == 1) {
+                mesh.setupNonInterleavedMesh(shaderProgram);
+            } else if (type == 2) {
+                mesh.createBuffers();
+            }
         }
-        setMesh(solidMesh);
+        setMesh(solidMeshes);
     }
 
     private void updateModelMatrix() {
@@ -53,7 +60,6 @@ public class SolidModel extends GameObject {
         if (angularDisplacement != 0) {
             rotate(angularDisplacement, getRotationAxis().x, getRotationAxis().y, getRotationAxis().z);
         }
-        setAngularDisplacement(angularDisplacement);
     }
 
     @Override
@@ -65,29 +71,42 @@ public class SolidModel extends GameObject {
 
     @Override
     public void render(Scene scene, Transformation transformation){
-        float[] mMVPMatrix = transformation.getMVPMatrix(this.getModelMatrix());
+        for(Mesh mesh: this.getMesh()) {
+            if(mesh == null) return; //do nothing
 
-        float[] ambient = this.getMesh().getMaterial().ambient;
-        float[] diffuse = this.getMesh().getMaterial().diffuse;
-        float[] specular = this.getMesh().getMaterial().specular;
-        float[] shininess = this.getMesh().getMaterial().shininess;
+            int fromIndex = 0;
+            for(Material material: mesh.getMaterials()) {
+                material.setupTexture();
 
-        Light light = scene.getLight();
-        ShaderProgram shaderProgram = scene.getShaderProgram(getShaderProgramId());
+                float[] mMVPMatrix = transformation.getMVPMatrix(this.getModelMatrix());
 
-        shaderProgram.passIntUniforms(SCENE_INT_UNIFORMS, new int[]{0});
-        shaderProgram.passFloatUniforms(SCENE_FLOAT_UNIFORMS, light.getLightPosInEyeSpace(), light.getLightColor(), new float[]{0,0,0},
-                ambient, diffuse, specular, shininess,
-                transformation.getViewMatrix(), mMVPMatrix);
-        getMesh().render(GLES30.GL_TRIANGLES);
+                float[] ambient = material.ambient;
+                float[] diffuse = material.diffuse;
+                float[] specular = material.specular;
+                float[] shininess = material.shininess;
+
+                int toIndex = material.getIndexCount();;
+
+                Light light = scene.getLight();
+                ShaderProgram shaderProgram = scene.getShaderProgram(getShaderProgramId());
+
+                shaderProgram.passIntUniforms(SCENE_INT_UNIFORMS, new int[]{0});
+                shaderProgram.passFloatUniforms(SCENE_FLOAT_UNIFORMS, light.getLightPosInEyeSpace(), light.getLightColor(), new float[]{0, 0, 0},
+                        ambient, diffuse, specular, shininess,
+                        transformation.getViewMatrix(), mMVPMatrix);
+                //arithmetic progression: a_n = a_0 + n*r; a_0 = 0
+                int toIndexInBytes = toIndex * mesh.getVertexStrider() * Constants.BYTES_PER_FLOAT;
+                mesh.render(GLES30.GL_TRIANGLES, fromIndex, toIndexInBytes);
+
+                fromIndex = toIndex;
+            }
+        }
     }
 
     @Override
     public void cleanUp(){
-
     }
 }
-
 
 
 
