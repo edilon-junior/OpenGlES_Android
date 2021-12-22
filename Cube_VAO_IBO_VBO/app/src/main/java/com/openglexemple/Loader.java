@@ -124,19 +124,14 @@ public class Loader {
             e.printStackTrace();
         }
 
-        //add the last mesh
-        Log.wtf(TAG, "create mesh : "+ meshName);
-        System.out.println("faces counter:");
-        for(int fc: indexCounter){
-            System.out.println(faceCounter );
-        }
-        System.out.println("indices.size: "+faceArray.size());
-        Mesh mesh = createMesh(modelName, positionArray, textureArray, normalArray, faceArray, materialName);
+        Log.wtf(TAG, "loaded mesh: "+meshName);
+        Mesh mesh = createMesh(modelName, positionArray, textureArray, normalArray, faceArray);
         mesh.setMeshName(meshName);
 
         Material[] materials = loadMaterialLib(modelName, materialLib);
         for(int i=0; i<materials.length;i++){
             materials[i].setIndexCount(indexCounter.get(i));
+            materials[i].setSample2Did(new int[]{i});
         }
         //add material to meshes
         mesh.setMaterials(materials);
@@ -148,8 +143,7 @@ public class Loader {
                             List<Float[]> positionArray,
                             List<Float[]> textureArray,
                             List<Float[]> normalArray,
-                            List<Integer[]> faceArray,
-                            String materialName){
+                            List<Integer[]> faceArray){
 
         if(positionArray.size() == 0){
             return null;
@@ -159,15 +153,15 @@ public class Loader {
         float[] textures  = new float[positionArray.size() * 2];
         float[] normals   = new float[positionArray.size() * 3];
         float[] vertices  = new float[positions.length + textures.length + normals.length];
-        int[]   indices   = new int[faceArray.size()];
+        short[] indices   = new short[faceArray.size()];
 
         int vertexStride = 3;// position x+y+z
 
         for (int i = 0; i < faceArray.size(); i++) {
             int stride = 3;
 
-            int v_index = faceArray.get(i)[0] - 1;
-            indices[i] = v_index;
+            int v_index =  faceArray.get(i)[0] - 1;
+            indices[i] = (short) v_index;
 
             if(faceArray.get(i)[1] > 0) {
                 int t_index = faceArray.get(i)[1] - 1;
@@ -279,7 +273,10 @@ public class Loader {
                     case "map_Kd":
                         textureName = ls[1];
                         int texture = loadTexture(modelName, textureName);
-                        Material material = new Material(ambient, diffuse, specular, shininess, transparency, texture);
+                        Log.wtf(TAG, "material name: "+materialName);
+                        Log.wtf(TAG, "texture id: "+ texture);
+                        int[] textureArray = new int[]{texture};
+                        Material material = new Material(ambient, diffuse, specular, shininess, transparency, textureArray);
                         material.setMaterialName(materialName);
                         materials[materialIndex] = material;
                         materialIndex++;
@@ -521,4 +518,5 @@ public class Loader {
         return list;
     }
 }
+
 
