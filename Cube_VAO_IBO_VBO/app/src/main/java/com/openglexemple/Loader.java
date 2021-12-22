@@ -1,3 +1,5 @@
+package com.example.openglexemple;
+
 import static android.opengl.GLES20.GL_TEXTURE_2D;
 
 import android.content.Context;
@@ -10,10 +12,14 @@ import android.opengl.GLUtils;
 import android.util.Log;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,16 +35,24 @@ public class Loader {
 
     public Mesh loadMeshIBO(String modelName) {
 
+        List<Mesh> meshes = new ArrayList<>();
+
         List<Float[]> positionArray = new ArrayList<>();
         List<Float[]> textureArray = new ArrayList<>();
         List<Float[]> normalArray = new ArrayList<>();
-        List<String> faceArray = new ArrayList<>();
-        String materialName = "";
+        List<Integer[]> faceArray = new ArrayList<>();
+        String materialName = null;
+        String meshName = "";
+        String materialLib = null;
+        int faceCounter = 0;
+        ArrayList<Integer> indexCounter = new ArrayList<>();
+
+        AssetManager assetManager = context.getAssets();
 
         BufferedReader bufferedReader = null;
         try {
             bufferedReader = new BufferedReader(
-                    new InputStreamReader(context.getAssets().open(
+                    new InputStreamReader(assetManager.open(
                             "models/"+modelName+"/"+ modelName+".obj"), StandardCharsets.UTF_8));
 
             String line;
@@ -47,7 +61,7 @@ public class Loader {
                 String[] ls = line.split("\\s+");
                 switch (ls[0]) {
                     case "mtllib":
-                        materialName = ls[1];
+                        materialLib = ls[1];
                         break;
                     case "v":
                         positionArray.add(new Float[]{
@@ -66,13 +80,38 @@ public class Loader {
                                 Float.parseFloat(ls[2]),
                                 Float.parseFloat(ls[3])});
                         break;
+                    case "usemtl":
+                        materialName = ls[1];
+                        break;
                     case "f":
-                        faceArray.add(ls[1]);
-                        faceArray.add(ls[2]);
-                        faceArray.add(ls[3]);
+                        String[] f1 = ls[1].split("/");
+                        faceArray.add(new Integer[]{
+                                Utils.parseInt(f1[0]),
+                                Utils.parseInt(f1[1]),
+                                Utils.parseInt(f1[2])});
+                        String[] f2 = ls[2].split("/");
+                        faceArray.add(new Integer[]{
+                                Utils.parseInt(f2[0]),
+                                Utils.parseInt(f2[1]),
+                                Utils.parseInt(f2[2])});
+                        String[] f3 = ls[3].split("/");
+                        faceArray.add(new Integer[]{
+                                Utils.parseInt(f3[0]),
+                                Utils.parseInt(f3[1]),
+                                Utils.parseInt(f3[2])});
+                        faceCounter++;
+                        break;
+                    case "o":
+                        faceCounter = 0;
+                        meshName = ls[1];
+                        break;
+                    case "endmesh":
+                        // 3 faces by line
+                        indexCounter.add(faceCounter * 3);
                         break;
                 }
             }
+
         } catch (IOException e) {
             Log.d(TAG, "error to read file " + modelName);
             e.printStackTrace();
@@ -85,106 +124,137 @@ public class Loader {
             e.printStackTrace();
         }
 
-        float[] positions = Utils.floatListToArray(positionArray);
-        float[] textures = new float[positionArray.size() * 2];
-        float[] normals = new float[positionArray.size() * 3];
-        float[] vertices = new float[positions.length + textures.length + normals.length];
-        int[] indices = new int[faceArray.size()];
-
-        processIndices(positions, textures, normals, vertices, indices,
-                textureArray, normalArray, faceArray);
-
-        Mesh mesh = new Mesh(positions, textures, normals, null, vertices, indices);
-
-        if(materialName.isEmpty()){
-            mesh.setMaterial(new Material());
-        }else{
-            mesh.setMaterial(loadMaterial(modelName, materialName));
+        //add the last mesh
+        Log.wtf(TAG, "create mesh : "+ meshName);
+        System.out.println("faces counter:");
+        for(int fc: indexCounter){
+            System.out.println(faceCounter );
         }
+        System.out.println("indices.size: "+faceArray.size());
+        Mesh mesh = createMesh(modelName, positionArray, textureArray, normalArray, faceArray, materialName);
+        mesh.setMeshName(meshName);
+
+        Material[] materials = loadMaterialLib(modelName, materialLib);
+        for(int i=0; i<materials.length;i++){
+            materials[i].setIndexCount(indexCounter.get(i));
+        }
+        //add material to meshes
+        mesh.setMaterials(materials);
 
         return mesh;
     }
 
-    private void processIndices(
-                                float[] pos,
-                                float[] textures,
-                                float[] normals,
-                                float[] vertices,
-                                int[] indices,
-                                List<Float[]> textureArray,
-                                List<Float[]> normalArray,
-                                List<String> faceArray) {
+    private Mesh createMesh(String modelName,
+                            List<Float[]> positionArray,
+                            List<Float[]> textureArray,
+                            List<Float[]> normalArray,
+                            List<Integer[]> faceArray,
+                            String materialName){
+
+        if(positionArray.size() == 0){
+            return null;
+        }
+
+        float[] positions = Utils.floatListToArray(positionArray);
+        float[] textures  = new float[positionArray.size() * 2];
+        float[] normals   = new float[positionArray.size() * 3];
+        float[] vertices  = new float[positions.length + textures.length + normals.length];
+        int[]   indices   = new int[faceArray.size()];
+
+        int vertexStride = 3;// position x+y+z
 
         for (int i = 0; i < faceArray.size(); i++) {
             int stride = 3;
-            String triplet = faceArray.get(i);
-            String[] triplet_split = triplet.split("/");
 
-            int v_index = Integer.parseInt(triplet_split[0]) - 1;
+            int v_index = faceArray.get(i)[0] - 1;
             indices[i] = v_index;
 
-            if(triplet_split.length > 1) {
-                int t_index = Integer.parseInt(triplet_split[1]) - 1;
+            if(faceArray.get(i)[1] > 0) {
+                int t_index = faceArray.get(i)[1] - 1;
                 Float[] texture = textureArray.get(t_index);
-                textures[v_index * 2] = texture[0];
+
+                textures[v_index * 2]     = texture[0];
                 textures[v_index * 2 + 1] = texture[1];
 
                 stride += 2;
             }
 
-            if(triplet_split.length > 2) {
-                int n_index = Integer.parseInt(triplet_split[2]) - 1;
+            if(faceArray.get(i)[2] > 0) {
+                int n_index = faceArray.get(i)[2] - 1;
                 Float[] normal = normalArray.get(n_index);
-                normals[v_index * 3] = normal[0];
+                normals[v_index * 3]     = normal[0];
                 normals[v_index * 3 + 1] = normal[1];
                 normals[v_index * 3 + 2] = normal[2];
 
                 stride += 3;
             }
 
-            vertices[v_index * stride] = pos[v_index * 3];
-            vertices[v_index * stride + 1] = pos[v_index * 3 + 1];
-            vertices[v_index * stride + 2] = pos[v_index * 3 + 2];
+            vertices[v_index * stride]     = positions[v_index * 3];
+            vertices[v_index * stride + 1] = positions[v_index * 3 + 1];
+            vertices[v_index * stride + 2] = positions[v_index * 3 + 2];
 
-            if(triplet_split.length > 1) {
+            if(faceArray.get(i)[1] > 0
+            ) {
                 vertices[v_index * stride + 3] = textures[v_index * 2];
                 vertices[v_index * stride + 4] = textures[v_index * 2 + 1];
+                vertexStride = 5; // position + texture
             }
-            if(triplet_split.length > 2) {
+            if(faceArray.get(i)[2] > 0) {
                 vertices[v_index * stride + 5] = normals[v_index * 3];
                 vertices[v_index * stride + 6] = normals[v_index * 3 + 1];
                 vertices[v_index * stride + 7] = normals[v_index * 3 + 2];
+                vertexStride = 8; //position + texture + normal
             }
         }
+
+        Mesh mesh = new Mesh(positions, textures, normals, null, vertices, indices);
+        mesh.setVertexStrider(vertexStride);
+        mesh.setModelName(modelName);
+
+        return mesh;
     }
 
-    public Material loadMaterial(String modelName, String materialName) {
+    public Material[] loadMaterialLib(String modelName, String materialLib) {
 
-        if (materialName.isEmpty()) {
-            return new Material();
+        Material[] materials = null;
+        int materialIndex = 0;
+
+        if (materialLib == null) {
+            materials = new Material[]{new Material()};
+            return materials;
         }
 
+        String materialName = null;
         float[] ambient = new float[3];
         float[] diffuse = new float[3];
         float[] specular = new float[3];
         float transparency = 0;
         float shininess = 0;
-        String textureName = null;
+        String textureName;
 
         BufferedReader bufferedReader = null;
         try {
             bufferedReader = new BufferedReader(
                     new InputStreamReader(context.getAssets().open(
-                            "models/"+modelName+"/" + materialName), StandardCharsets.UTF_8));
+                            "models/"+modelName+"/" + materialLib), StandardCharsets.UTF_8));
 
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         String line;
         try {
             while ((line = bufferedReader.readLine()) != null) {
                 String[] ls = line.split("\\s+");
                 switch (ls[0]) {
+                    case "#":
+                        if(ls[1].equals("Material")){
+                            materials = new Material[Integer.parseInt(ls[3])];
+                        }
+                        break;
+                    case "newmtl":
+                        materialName = ls[1];
+                        break;
                     case "Ka":
                         ambient[0] = Float.parseFloat(ls[1]);
                         ambient[1] = Float.parseFloat(ls[2]);
@@ -208,6 +278,11 @@ public class Loader {
                         break;
                     case "map_Kd":
                         textureName = ls[1];
+                        int texture = loadTexture(modelName, textureName);
+                        Material material = new Material(ambient, diffuse, specular, shininess, transparency, texture);
+                        material.setMaterialName(materialName);
+                        materials[materialIndex] = material;
+                        materialIndex++;
                         break;
                 }
             }
@@ -222,8 +297,11 @@ public class Loader {
             e.printStackTrace();
         }
 
-        int texture = loadTexture(modelName, textureName);
-        return new Material(ambient, diffuse, specular, shininess, transparency, texture);
+        if (materials == null) {
+            materials = new Material[]{new Material()};
+        }
+
+        return materials;
     }
 
     public int loadTexture(final String modelName, final String textureName)
@@ -282,13 +360,6 @@ public class Loader {
         flip.postScale(1f, -1f);
 
         return Bitmap.createBitmap(bitmap_asset, 0, 0, bitmap_asset.getWidth(), bitmap_asset.getHeight(), flip, true);
-    }
-
-    public ShaderProgram loadShaderProgram(String vertexName, String fragmentName, String[] attributes){
-        String vertexString = shaderToString(vertexName);
-        String fragmentString = shaderToString(fragmentName);
-        ShaderProgram shaderProgram = new ShaderProgram(vertexString, fragmentString, attributes);
-        return shaderProgram;
     }
 
     public String shaderToString(String shaderName) {
@@ -431,6 +502,7 @@ public class Loader {
         return mesh;
     }
     */
+
     public List<String> parseOBJtoStringList(String modelName) throws Exception {
         List<String> list = new ArrayList<>();
         BufferedReader bufferedReader = null;
@@ -449,3 +521,4 @@ public class Loader {
         return list;
     }
 }
+
