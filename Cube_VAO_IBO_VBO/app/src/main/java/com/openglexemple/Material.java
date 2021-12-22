@@ -11,8 +11,9 @@ public class Material {
     float optical_density;
     float dissolve;
     float illumination;
-    int textureId;
+    int[] textureId;
     int indexCount = 0;
+    int[] sample2Did = new int[1];
     String materialName = "";
 
     public Material(float[] ambient,
@@ -20,7 +21,7 @@ public class Material {
                     float[] specular,
                     float shininess,
                     float transparency,
-                    int texture){
+                    int[] texture){
         this.ambient = ambient;
         this.diffuse = diffuse;
         this.specular = specular;
@@ -38,7 +39,7 @@ public class Material {
         this.specular = specular;
         this.shininess = new float[]{shininess};
         this.transparency = new float[]{transparency};
-        this.textureId = 0;
+        this.textureId = new int[1];
     }
     public Material() {
         this.ambient = new float[]{ 211,211,211};
@@ -46,12 +47,12 @@ public class Material {
         this.specular = new float[]{255,255,255};
         this.shininess = new float[]{0.1f};
         this.transparency = new float[]{0};
-        this.textureId = 0;
+        this.textureId =  new int[1];
     }
-
-    public void setupTexture(){
-        GLES30.glActiveTexture(GLES30.GL_TEXTURE0);
-        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, getTexture());
+    // id varies from 0 to 31
+    public void setupTexture(int id){
+        GLES30.glActiveTexture(33984 + id);
+        GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, getTexture()[0]);
     }
 
     public void setMaterialName(String materialName){
@@ -60,10 +61,10 @@ public class Material {
     public String getMaterialName(){
         return materialName;
     }
-    public int getTexture(){
+    public int[] getTexture(){
         return this.textureId;
     }
-    public void setTexture(int texture){
+    public void setTexture(int[] texture){
         this.textureId = texture;
     }
     public void setTransparency(float transparency){
@@ -85,5 +86,12 @@ public class Material {
     }
     public int getIndexCount(){
         return indexCount;
+    }
+    public int[] getSample2Did() {
+        return sample2Did;
+    }
+
+    public void setSample2Did(int[] sample2Did) {
+        this.sample2Did = sample2Did;
     }
 }
